@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="ImGui.NET">
+            <HintPath>..\References\ImGui.NET.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="TerraAngel.PluginAPI">
+            <HintPath>..\References\TerraAngel.PluginAPI.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Terraria">
+            <HintPath>..\References\Terraria.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\SourceHanSansSC-VF.ttf" />
+        <EmbeddedResource Include="Resources\SourceHanSans-VF.ttf" />
+        <EmbeddedResource Include="Resources\SourceHanSansK-VF.ttf" />
+    </ItemGroup>
+
+</Project>
