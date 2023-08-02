@@ -37,18 +37,16 @@ public class CJKFontFixer : Plugin
 
     public override void Load()
     {
-
+        Utils.ExtractFontFiles();
     }
 
     private int counter;
     public override void Update()
     {
-        if (counter <= 30)
+        if (counter <= 60)
             counter++;
-        if (counter == 30)
+        if (counter == 60)
         {
-            Utils.ExtractFontFiles();
-        
             TerrariaFonts = (Dictionary<float, ImFontPtr>)typeof(ClientAssets)
                 .GetField("TerrariaFonts", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
             MonospaceFonts = (Dictionary<float, ImFontPtr>)typeof(ClientAssets)
