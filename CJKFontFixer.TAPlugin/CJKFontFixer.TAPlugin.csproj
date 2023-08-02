@@ -23,9 +23,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Resources\SourceHanSansSC-VF.ttf" />
-        <EmbeddedResource Include="Resources\SourceHanSans-VF.ttf" />
-        <EmbeddedResource Include="Resources\SourceHanSansK-VF.ttf" />
+        <EmbeddedResource Include="Resources\SourceHanSansSC-VF.ttf"/>
+        <!--<EmbeddedResource Include="Resources\SourceHanSans-VF.ttf" />-->
+        <!--<EmbeddedResource Include="Resources\SourceHanSansK-VF.ttf" />-->
     </ItemGroup>
 
 </Project>
