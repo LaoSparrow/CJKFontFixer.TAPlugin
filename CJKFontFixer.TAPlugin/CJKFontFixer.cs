@@ -1,6 +1,8 @@
 ﻿using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using ImGuiNET;
+using MonoMod.RuntimeDetour;
 using TerraAngel;
 using TerraAngel.Assets;
 using TerraAngel.Plugin;
@@ -16,15 +18,24 @@ public class CJKFontFixer : Plugin
     #region Font File Names
 
     public static string ChineseFontName => $"{ClientLoader.AssetPath}/SourceHanSansSC-VF.ttf";
-    // public static string JapaneseFontName => $"{ClientLoader.AssetPath}/SourceHanSans-VF.ttf";
-    // public static string KoreanFontName => $"{ClientLoader.AssetPath}/SourceHanSansK-VF.ttf";
 
     #endregion
 
     #region Extracted ClientAssets Fields
 
-    private static Dictionary<float, ImFontPtr>? TerrariaFonts;
-    private static Dictionary<float, ImFontPtr>? MonospaceFonts;
+    private static Dictionary<float, ImFontPtr>? TerrariaFonts =>
+        (Dictionary<float, ImFontPtr>)typeof(ClientAssets)
+        .GetField("TerrariaFonts", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+    private static Dictionary<float, ImFontPtr>? MonospaceFonts =>
+        (Dictionary<float, ImFontPtr>)typeof(ClientAssets)
+        .GetField("MonospaceFonts", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+
+    #endregion
+
+    #region Detour
+
+    private static Hook? LoadTerrariaFontHook;
+    private static Hook? LoadMonospaceFontHook;
 
     #endregion
 
@@ -38,73 +49,91 @@ public class CJKFontFixer : Plugin
     public override void Load()
     {
         Utils.ExtractFontFiles();
+        LoadTerrariaFontHook = new Hook(
+            () => ClientAssets.LoadTerrariaFont(default, default),
+            () => LoadTerrariaFont(default, default));
+        LoadMonospaceFontHook = new Hook(
+            () => ClientAssets.LoadMonospaceFont(default, default),
+            () => LoadMonospaceFont(default, default));
+        
     }
 
-    private int counter;
+    private int counter = 0;
+    
     public override void Update()
     {
         if (counter <= 60)
             counter++;
         if (counter == 60)
         {
-            TerrariaFonts = (Dictionary<float, ImFontPtr>)typeof(ClientAssets)
-                .GetField("TerrariaFonts", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
-            MonospaceFonts = (Dictionary<float, ImFontPtr>)typeof(ClientAssets)
-                .GetField("MonospaceFonts", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
             ClientLoader.MainRenderer?.EnqueuePreDrawAction(() =>
             {
-                TerrariaFonts.Clear();
-                MonospaceFonts.Clear();
+                TerrariaFonts!.Clear();
+                MonospaceFonts!.Clear();
             
+                ImGui.GetIO().Fonts.Clear();
                 ImGui.GetIO().Fonts.AddFontDefault();
-                ReloadFonts();
+                ClientAssets.LoadFonts(ImGui.GetIO());
                 ClientLoader.MainRenderer?.RebuildFontAtlas();
             });
         }
     }
 
+    public override void Unload()
+    {
+        LoadTerrariaFontHook?.Undo();
+        LoadTerrariaFontHook?.Dispose();
+        LoadTerrariaFontHook = null;
+        
+        LoadMonospaceFontHook?.Undo();
+        LoadMonospaceFontHook?.Dispose();
+        LoadMonospaceFontHook = null;
+
+    }
+
     #endregion
 
-    #region Font Reloading
 
-    public static void ReloadFonts()
-    {
-        foreach (var size in ClientAssets.DefaultSizes)
-        {
-            ReloadMonospaceFont(size);
-            ReloadTerrariaFont(size);
-        }
-    }
+    #region MyRegion
 
-    public static void ReloadTerrariaFont(float size, bool withoutSymbols = false)
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static void LoadTerrariaFont(float size, bool withoutSymbols = false)
     {
         TerrariaFonts!.Add(size, ClientAssets.LoadFont(ClientAssets.TerrariaFontName, size, 0x0020, 0x007F));
-        // ClientAssets.LoadFont(ClientAssets.FallbackFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f, 0x0080, 0x00FF, 0x0400, 0x04FF, 0x2320, 0x2330, 0x2000, 0x2020);
-        Utils.LoadFont(ChineseFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f, Utils.GlyphRanges.ChineseFull);
-        // It seems that Simplified Chinese Font contains Japanese?
-        // If you found any issue on displaying Japanese, just uncomment this line as well as line 96
-        // Utils.LoadFont(JapaneseFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f, Utils.GlyphRanges.Japanese);
-        // Utils.LoadFont(KoreanFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f, Utils.GlyphRanges.Korean);
+
+        ClientAssets.LoadFont(ChineseFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f,
+            0x0020, 0x00FF, // Basic Latin + Latin Supplement
+            0x2000, 0x206F, // General Punctuation
+            0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
+            0x31F0, 0x31FF, // Katakana Phonetic Extensions
+            0xFF00, 0xFFEF, // Half-width characters
+            0xFFFD, 0xFFFD, // Invalid
+            0x4e00, 0x9FAF ); // CJK Ideograms
 
         if (!withoutSymbols)
         {
             ClientAssets.LoadFont(ClientAssets.IconFontName, size, true, new Vector2(0f, 4f), Icon.IconMin, Icon.IconMax);
         }
     }
-    
-    public static void ReloadMonospaceFont(float size, bool withoutSymbols = false)
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static void LoadMonospaceFont(float size, bool withoutSymbols = false)
     {
         MonospaceFonts!.Add(size, ClientAssets.LoadFont(ClientAssets.MonoFontName, size, 0x0020, 0x00FF, 0x0400, 0x04FF, 0x2020, 0x22FF));
-        // ClientAssets.LoadFont(ClientAssets.FallbackFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f, 0x2320, 0x2330, 0x2000, 0x2020);
-        Utils.LoadFont(ChineseFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f, Utils.GlyphRanges.ChineseFull);
-        // Utils.LoadFont(JapaneseFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f, Utils.GlyphRanges.Japanese);
-        // Utils.LoadFont(KoreanFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f, Utils.GlyphRanges.Korean);
+        ClientAssets.LoadFont(ChineseFontName, size, true, Vector2.Zero, Vector2.Zero, 0f, float.MaxValue, 2f,
+            0x0020, 0x00FF, // Basic Latin + Latin Supplement
+            0x2000, 0x206F, // General Punctuation
+            0x3000, 0x30FF, // CJK Symbols and Punctuations, Hiragana, Katakana
+            0x31F0, 0x31FF, // Katakana Phonetic Extensions
+            0xFF00, 0xFFEF, // Half-width characters
+            0xFFFD, 0xFFFD, // Invalid
+            0x4e00, 0x9FAF ); // CJK Ideograms
 
         if (!withoutSymbols)
         {
             ClientAssets.LoadFont(ClientAssets.IconFontName, size, true, new Vector2(0f, 4f), Icon.IconMin, Icon.IconMax);
         }
     }
-    
+
     #endregion
 }

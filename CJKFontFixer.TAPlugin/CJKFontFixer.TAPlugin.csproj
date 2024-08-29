@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,8 +25,10 @@
 
     <ItemGroup>
         <EmbeddedResource Include="Resources\SourceHanSansSC-VF.ttf"/>
-        <!--<EmbeddedResource Include="Resources\SourceHanSans-VF.ttf" />-->
-        <!--<EmbeddedResource Include="Resources\SourceHanSansK-VF.ttf" />-->
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MonoMod.RuntimeDetour" Version="25.1.2"/>
     </ItemGroup>
 
 </Project>

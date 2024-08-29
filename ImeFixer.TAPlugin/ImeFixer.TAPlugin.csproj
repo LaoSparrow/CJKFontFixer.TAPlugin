@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="ImGui.NET">
+            <HintPath>..\References\ImGui.NET.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="ReLogic">
+            <HintPath>..\References\ReLogic.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="TerraAngel.PluginAPI">
+            <HintPath>..\References\TerraAngel.PluginAPI.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Terraria">
+            <HintPath>..\References\Terraria.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="TNA">
+          <HintPath>..\References\TNA.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="25.1.2"/>
+    </ItemGroup>
+
+</Project>
