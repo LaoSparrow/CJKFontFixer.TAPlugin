@@ -57,7 +57,7 @@ public class WinImm32Ime : PlatformIme, IMessageFilter
         // _isFocused = global::ImeFixer.TAPlugin.Windows.NativeMethods.GetForegroundWindow() == _hWnd;
         _isFocused = true;
         _wndProcHook.AddMessageFilter(this);
-        SetEnabled(bEnable: false);
+        SetEnabled(bEnable: true);
     }
 
     private void SetEnabled(bool bEnable)
